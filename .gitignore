@@ -1,3 +1,9 @@
+# OSX
+.DS_Store
+
+# Kernel
+*.bin
+
 # Prerequisites
 *.d
 
