@@ -1,9 +1,9 @@
 [bits 32]
+section .text
 call main
 ret
 
 VIDEO_MEMORY equ 0xb8000
-WHITE_ON_BLACK equ 0x0f ; the color byte for each character
 
 print_string_pm:
     pusha
@@ -26,11 +26,21 @@ print_string_pm_done:
     popa
     ret
 
+%include "./utils/vga_driver.asm"
+
 main:
-	add eax, MSG
+	mov eax, MSG
 	mov ebx, eax
 	call print_string_pm
-	ret
+
+    push 5
+    push 20
+    mov eax, MSG
+    push eax
+    call kprint_at
+
+    ret
 
 MSG db "msg from kernel 111111", 0
 times 512 - ($-$$) db 0
+finish1:

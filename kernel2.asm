@@ -1,5 +1,6 @@
 [bits 32]
-call main
+section .text
+call main2
 ret
 
 VIDEO_MEMORY equ 0xb8000
@@ -26,11 +27,12 @@ print_string_pm_done:
     popa
     ret
 
-main:
-	add eax, MSG
+main2:
+	mov eax, MSG
 	mov ebx, eax
 	call print_string_pm
 	ret
 
 MSG db "                msg from kernel 222222", 0
 times 512 - ($-$$) db 0
+finish2:
