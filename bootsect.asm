@@ -1,6 +1,6 @@
 [org 0x7c00]
 KERNEL_OFFSET equ 0x1000 ; The same one we used when linking the kernel
-KERNEL2_OFFSET equ 0x1200
+KERNEL2_OFFSET equ 0x2000
 
     mov [BOOT_DRIVE], dl ; Remember that the BIOS sets us the boot drive in 'dl' on boot
     mov bp, 0x9000
@@ -27,13 +27,13 @@ load_kernel:
     call print_nl
 
     mov bx, KERNEL_OFFSET ; Read from disk and store in 0x1000
-    mov dh, 1
+    mov dh, 8
     mov cl, 2
     mov dl, [BOOT_DRIVE]
     call disk_load
     mov bx, KERNEL2_OFFSET ; Read from disk and store in 0x2000
-    mov dh, 1
-    mov cl, 3
+    mov dh, 2
+    mov cl, 10
     mov dl, [BOOT_DRIVE]
     call disk_load
     ret
@@ -47,23 +47,23 @@ BEGIN_PM:
     
     call KERNEL2_OFFSET
 
-    mov ebx, MSG_OUT
-    call print_string_pm
-    push 'a'
-    push 2
-    call test_stack
-    mov edx, 0xb8000
-    mov ah,0xf4
-    mov [edx], ax
+;     mov ebx, MSG_OUT
+;     call print_string_pm
+;     push 'a'
+;     push 2
+;     call test_stack
+;     mov edx, 0xb8000
+;     mov ah,0xf4
+;     mov [edx], ax
     jmp $ ; Stay here when the kernel returns control to us (if ever)
 
-test_stack:
-    push ebx
-    mov ebx, esp
-    mov eax, [ebx + 8]
-    add eax, [ebx + 12]
-    pop ebx
-    ret 8
+; test_stack:
+;     push ebx
+;     mov ebx, esp
+;     mov eax, [ebx + 8]
+;     add eax, [ebx + 12]
+;     pop ebx
+;     ret 8
 
 BOOT_DRIVE db 0 ; It is a good idea to store it in memory because 'dl' may get overwritten
 MSG_REAL_MODE db "Started in 16-bit Real Mode", 0

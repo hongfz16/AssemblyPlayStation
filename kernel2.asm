@@ -34,5 +34,5 @@ main2:
 	ret
 
 MSG db "                msg from kernel 222222", 0
-times 512 - ($-$$) db 0
+times 1024 - ($-$$) db 0
 finish2:
