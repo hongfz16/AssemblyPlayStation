@@ -7,27 +7,68 @@ ret
 
 keyboard_handler:
     cli
-    push eax
+    pushad
     mov ax, 0x20
     push ax
     mov ax, 0x20
     push ax
     call port_byte_out
 
-    call clear_screen
-    push 10
-    push 10
-    mov eax, KEYBOARD
-    push eax
-    call kprint_at
+;    call clear_screen
+;    push 10
+;    push 10
+;    mov eax, KEYBOARD
+;    push eax
+;    call kprint_at
 
     mov ax, 0x60
     push ax
+    mov eax, 0
     call port_byte_in
+    mov ebx, 0
+    mov bl, [kbd_tail]
+    cmp bl, [kbd_head]
+    je do_nothing
 
-    pop eax
+    add ebx, kbd_buf
+    cmp al, 0x35
+    jg do_nothing
+    mov edx, scancode_trans
+    add edx, eax
+    mov al, [edx]
+    mov [ebx], al
+    mov bl, [kbd_tail]
+    inc bl
+    mov [kbd_tail], bl
+
+
+
+    do_nothing:
+
+    popad
     sti
     iret
+
+getchar:
+;    pushad
+    push ebx
+    mov ebx, 0
+    mov bl, [kbd_head]
+    inc ebx,
+    cmp bl, [kbd_tail]
+    je empty_buffer
+    mov [kbd_head], bl
+    add ebx, kbd_buf
+    mov al, [ebx]
+    jmp finish
+    empty_buffer:
+    mov al, 0
+    jmp finish
+
+    finish:
+    pop ebx
+ ;   popad
+    ret
 
 timer_handler:
     cli
@@ -39,9 +80,9 @@ timer_handler:
     push ax
     call port_byte_out
 
-    mov eax, TIMER
-    push eax
-    call kprint
+;    mov eax, TIMER
+;    push eax
+;    call kprint
     
     pop eax
     sti
@@ -50,14 +91,12 @@ timer_handler:
 port_byte_in:
     push ebp
     mov ebp, esp
-    push eax
     push edx
 
     mov dx, [ebp+8]
     in al, dx
 
     pop edx
-    pop eax
     pop ebp
     ret 2
 
@@ -248,14 +287,29 @@ main:
 
     ; INT 33
 
-    jmp $
+    ;jmp $
+    loop:
+    mov eax, 0
+    call getchar
+    cmp al, 0
+    je loop
+    mov [szFmt], al
+    push szFmt
+    call kprint
+    jmp loop
+
     ret
 
 _IDT times 256 dq 0
 IDT_REG times 6 db 0
 
+szFmt db 0,0
 KEYBOARD db "This is a message from keyboard interrupt!!", 0
 TIMER db "Timer!", 0
 MSG db "msg from kernel 111111", 0
 times 4096 - ($-$$) db 0
+kbd_buf times 256 db 0
+kbd_head db 255
+kbd_tail db 0
+scancode_trans db 0,0x1b,"1234567890-+",0x08,0x09,"QWERTYUIOP[]",0x0a,0x0d,"ASDFGHJKL",0x3b,0x27,0x60,".",0x5c,"ZXCVBNM",0x2c,"./.",0,0,0,0,0,0,0,0,0,0
 finish1:
