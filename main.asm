@@ -19,6 +19,8 @@ extern int_to_ascii
 global getchar
 global register_kbd_callback
 global register_tim_callback
+global port_byte_out
+global port_byte_in
 
 keyboard_handler:
     cli
@@ -29,20 +31,27 @@ keyboard_handler:
     push ax
     call port_byte_out
 
+;    call clear_screen
+;    push 10
+;    push 10
+;    mov eax, KEYBOARD
+;    push eax
+;    call kprint_at
+
     mov ax, 0x60
     push ax
     mov eax, 0
     call port_byte_in
     mov esi, eax
-    ; push eax ; to give arg. to kbd_callback
+;    push eax ; to give arg. to kbd_callback
     mov ebx, 0
     mov bl, [kbd_tail]
     cmp bl, [kbd_head]
     je do_nothing
 
     add ebx, kbd_buf
-    cmp al, 0x35
-    jg do_nothing
+    cmp al, 0x30
+    ja do_nothing
     mov edx, scancode_trans
     add edx, eax
     mov al, [edx]
@@ -90,24 +99,6 @@ timer_handler:
     sti
     iret
 
-kbd_hdl:
-; dd: esi [ebp+8]
-    push ebp
-    mov ebp, esp
-    
-    mov eax, [ebp+8]
-    
-    cmp eax, 0x2d
-    jne kbd_hdl_finish
-    mov eax, TIMER
-    push eax
-    call kprint
-    kbd_hdl_finish:
-    
-    pop ebp
-    ret 4
-
-
 register_kbd_callback:
 ; dd: kbd_callback_address [ebp+8]
     push ebp
@@ -137,11 +128,12 @@ register_tim_callback:
     ret
 
 getchar:
-; return al
+;    pushad
+;    cli
     push ebx
     mov ebx, 0
     mov bl, [kbd_head]
-    inc ebx,
+    inc bl,
     cmp bl, [kbd_tail]
     je empty_buffer
     mov [kbd_head], bl
@@ -154,6 +146,8 @@ getchar:
 
     getchar_finish:
     pop ebx
+;    sti
+ ;   popad
     ret
 
 port_byte_in:
