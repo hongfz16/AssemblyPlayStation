@@ -10,7 +10,7 @@ MODU  equ 0x80000000
 init_seed:
 	mov ah, 0x00
 	; int 1ah
-	mov [seed], word 0xf2
+	mov [seed], word 0xf0
 	mov [seed+2], word 0xf5
 	ret
 
@@ -23,6 +23,7 @@ rand_num:
 	push ebx
 	push edx
 	
+	before_rand_calc:
 	mov eax, [seed]
 	mov ebx, A
 	mul ebx
@@ -33,6 +34,7 @@ rand_num:
 	mov eax, edx
 	mov [seed], eax
 	
+	after_rand_calc:
 	; mov ebx, [ebp+8]
 	; div ebx
 	; mov eax, edx

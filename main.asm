@@ -1,6 +1,11 @@
 [bits 32]
 section .text
+
+MENU_ENTRY equ 0x2000
+
 call main
+call MENU_ENTRY
+jmp $
 ret
 
 extern init_seed
@@ -11,34 +16,60 @@ extern kprint_at
 extern print_char
 extern int_to_ascii
 
+global getchar
+global register_kbd_callback
+global register_tim_callback
+
 keyboard_handler:
     cli
-    push eax
+    pushad
     mov ax, 0x20
     push ax
     mov ax, 0x20
     push ax
     call port_byte_out
 
-    ; call clear_screen
-    ; push 10
-    ; push 10
-    ; mov eax, KEYBOARD
-    ; push eax
-    ; call kprint_at
-
     mov ax, 0x60
     push ax
+    mov eax, 0
     call port_byte_in
+    mov esi, eax
+    ; push eax ; to give arg. to kbd_callback
+    mov ebx, 0
+    mov bl, [kbd_tail]
+    cmp bl, [kbd_head]
+    je do_nothing
 
-    pop eax
+    add ebx, kbd_buf
+    cmp al, 0x35
+    jg do_nothing
+    mov edx, scancode_trans
+    add edx, eax
+    mov al, [edx]
+    mov [ebx], al
+    mov bl, [kbd_tail]
+    inc bl
+    mov [kbd_tail], bl
+
+    mov ebx, [kbd_callback]
+    test ebx, 0xffffffff
+    jz do_nothing
+    pushad
+    push esi
+    mov eax, esi
+    call [kbd_callback]
+    popad
+
+    do_nothing:
+
+    popad
     sti
     iret
 
 timer_handler:
     cli
-    push eax
-    
+
+    pushad
     mov ax, 0x20
     push ax
     mov ax, 0x20
@@ -48,22 +79,94 @@ timer_handler:
     ; mov eax, TIMER
     ; push eax
     ; call kprint
-    
-    pop eax
+
+    mov ebx, [tim_callback]
+    test ebx, 0xffffffff
+    jz timer_handler_finish
+    call [tim_callback]
+    timer_handler_finish:
+    popad
+
     sti
     iret
 
-port_byte_in:
+kbd_hdl:
+; dd: esi [ebp+8]
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp+8]
+    
+    cmp eax, 0x2d
+    jne kbd_hdl_finish
+    mov eax, TIMER
+    push eax
+    call kprint
+    kbd_hdl_finish:
+    
+    pop ebp
+    ret 4
+
+
+register_kbd_callback:
+; dd: kbd_callback_address [ebp+8]
     push ebp
     mov ebp, esp
     push eax
+
+    mov eax, [ebp+8]
+    mov [kbd_callback], eax
+
+    pop eax
+    pop ebp
+    ret 4
+
+register_tim_callback:
+; dd: timer_callback_address [ebp+8]
+    cli
+    push ebp
+    mov ebp, esp
+    push eax
+
+    mov eax, [ebp+8]
+    mov [tim_callback], eax
+
+    pop eax
+    pop ebp
+    sti
+    ret
+
+getchar:
+; return al
+    push ebx
+    mov ebx, 0
+    mov bl, [kbd_head]
+    inc ebx,
+    cmp bl, [kbd_tail]
+    je empty_buffer
+    mov [kbd_head], bl
+    add ebx, kbd_buf
+    mov al, [ebx]
+    jmp getchar_finish
+    empty_buffer:
+    mov al, 0
+    jmp getchar_finish
+
+    getchar_finish:
+    pop ebx
+    ret
+
+port_byte_in:
+; dw: port [ebp+8]
+; return: al
+    push ebp
+    mov ebp, esp
     push edx
 
     mov dx, [ebp+8]
     in al, dx
 
     pop edx
-    pop eax
     pop ebp
     ret 2
 
@@ -142,28 +245,11 @@ redirect:
     ret
 
 main:
-	; mov eax, MSG
-	; mov ebx, eax
-	; call print_string_pm
-
-    ; push 20
-    ; push 20
-    ; mov eax, -1
-    ; push eax
-    ; mov eax, -1
-    ; push eax
-
-    ; call clear_screen
-    ; push 25
-    ; push 25
-    ; mov eax, MSG
-    ; push eax
-    ; call kprint_at
     cli
 
     call redirect
     
-    ;timer
+    ;set timer ivt
 
     mov eax, _IDT
     add eax, 32  * 8
@@ -188,7 +274,7 @@ main:
     shr ebx, 16
     mov [eax], bx
 
-    ; keyboard
+    ; set keyboard ivt
 
     mov eax, _IDT
     add eax, 33  * 8
@@ -221,21 +307,12 @@ main:
     mov ebx, _IDT
     mov [eax], ebx
 
-    ; mov ax, 0x11
-    ; push ax
-    ; mov ax, 0x20
-    ; push ax
-    ; call port_byte_out
-    ; mov ax, 0x11
-    ; push ax
-    ; mov ax, 0xa0
-    ; push ax
-    ; call port_byte_out
-
     lidt [IDT_REG]
 
     sti
 
+    ; something os tutorial has done to init
+    ; timer but it seems useless
     mov ax, 0x36
     push ax
     mov ax, 0x43
@@ -252,38 +329,19 @@ main:
     push ax
     call port_byte_out
 
-    ; main1_loop:
-    ;     mov eax, MSG
-    ;     push eax
-    ;     call kprint
-    ;     mov ecx, 0xffffff
-    ;     kill_time:
-    ;         sub ecx, 1
-    ;         cmp ecx, 0
-    ;         je kill_time_done
-    ;         jmp kill_time
-    ;     kill_time_done:
-    ;     jmp main1_loop
-
-    call init_seed
-    mov eax, 0x0
-    in_rand_num:
-    call rand_num
-    out_rand_num:
-    push randnumber
-    push eax
-    call int_to_ascii
-    push randnumber
-    call kprint
-
     ret
+
 
 _IDT times 256 dq 0
 IDT_REG times 6 db 0
 
-randnumber db 0,0,0,0,0,0,0,0,0,0,0,0,0,0
 KEYBOARD db "This is a message from keyboard interrupt!!", 0
 TIMER db "Timer!", 0
-MSG db "ha", 0
+MSG db "msg from kernel 111111", 0
+kbd_buf times 256 db 0
+kbd_head db 255
+kbd_tail db 0
+kbd_callback dd 0
+tim_callback dd 0
+scancode_trans db 0,0x1b,"1234567890-+",0x08,0x09,"QWERTYUIOP[]",0x0a,0x0d,"ASDFGHJKL",0x3b,0x27,0x60,".",0x5c,"ZXCVBNM",0x2c,"./.",0,0,0,0,0,0,0,0,0,0
 times 4096 - ($-$$) db 0
-finish1:

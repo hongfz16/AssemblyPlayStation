@@ -4,44 +4,33 @@
 
 # First rule is the one executed when no parameters are fed to the Makefile
 GDB = /usr/local/i386elfgcc/bin/i386-elf-gdb
-
-all: run
-
-kernel1.bin: kernel1.asm
-	nasm $< -f bin -o $@
-
-kernel2.bin: kernel2.asm
-	nasm $< -f bin -o $@
+LD = i386-elf-ld
+CC = i386-elf-gcc
+NASM = nasm
 
 bootsect.bin: bootsect.asm
-	nasm $< -f bin -o $@
-
-os-image.bin: bootsect.bin kernel1.bin kernel2.bin
-	cat $^ > $@
-
-run: os-image.bin
-	qemu-system-i386 -fda $<
+	${NASM} $< -f bin -o $@
 
 %.o: %.asm
-	nasm $< -f elf -o $@
+	${NASM} $< -f elf -o $@
 
 itoa.o: utils/itoa.asm
-	nasm $< -f elf -o $@
+	${NASM} $< -f elf -o $@
 
 random.o: utils/random.asm
-	nasm $< -f elf -o $@
+	${NASM} $< -f elf -o $@
 
 vga_driver.o: utils/vga_driver.asm
-	nasm $< -f elf -o $@
+	${NASM} $< -f elf -o $@
 
-run-debug: bootsect.bin kernel1.o kernel2.o itoa.o random.o vga_driver.o
-	i386-elf-ld -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o itoa.o random.o vga_driver.o --oformat binary
+run-debug: bootsect.bin main.o kernel.o itoa.o random.o vga_driver.o
+	${LD} -o kernel.bin -Ttext 0x1000 main.o kernel.o itoa.o random.o vga_driver.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -fda os-image-debug.bin
 
-debug: bootsect.bin kernel1.o kernel2.o
-	i386-elf-ld -o kernel.elf -Ttext 0x1000 kernel1.o kernel2.o
-	i386-elf-ld -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o --oformat binary
+debug: bootsect.bin main.o kernel.o itoa.o random.o vga_driver.o
+	${LD} -o kernel.elf -Ttext 0x1000 main.o kernel.o itoa.o random.o vga_driver.o
+	${LD} -o kernel.bin -Ttext 0x1000 main.o kernel.o itoa.o random.o vga_driver.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -s -fda os-image-debug.bin &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
