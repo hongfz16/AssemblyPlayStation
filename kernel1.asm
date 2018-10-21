@@ -4,6 +4,10 @@ call main
 ret
 
 %include "./utils/vga_driver.asm"
+%include "./utils/random.asm"
+%include "./utils/itoa.asm"
+
+global MSG
 
 keyboard_handler:
     cli
@@ -14,12 +18,12 @@ keyboard_handler:
     push ax
     call port_byte_out
 
-    call clear_screen
-    push 10
-    push 10
-    mov eax, KEYBOARD
-    push eax
-    call kprint_at
+    ; call clear_screen
+    ; push 10
+    ; push 10
+    ; mov eax, KEYBOARD
+    ; push eax
+    ; call kprint_at
 
     mov ax, 0x60
     push ax
@@ -39,9 +43,9 @@ timer_handler:
     push ax
     call port_byte_out
 
-    mov eax, TIMER
-    push eax
-    call kprint
+    ; mov eax, TIMER
+    ; push eax
+    ; call kprint
     
     pop eax
     sti
@@ -246,16 +250,33 @@ main:
     push ax
     call port_byte_out
 
-    ; INT 33
+    ; main1_loop:
+    ;     mov eax, MSG
+    ;     push eax
+    ;     call kprint
+    ;     mov ecx, 0xffffff
+    ;     kill_time:
+    ;         sub ecx, 1
+    ;         cmp ecx, 0
+    ;         je kill_time_done
+    ;         jmp kill_time
+    ;     kill_time_done:
+    ;     jmp main1_loop
 
-    jmp $
+    call init_seed
+    call rand_num
+    push eax
+    push randnumber
+    call int_to_ascii
+
     ret
 
 _IDT times 256 dq 0
 IDT_REG times 6 db 0
 
+randnumber db 0,0,0,0,0,0,0,0,0,0,0,0,0,0
 KEYBOARD db "This is a message from keyboard interrupt!!", 0
 TIMER db "Timer!", 0
-MSG db "msg from kernel 111111", 0
+MSG db "ha", 0
 times 4096 - ($-$$) db 0
 finish1:

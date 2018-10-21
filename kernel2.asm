@@ -3,6 +3,7 @@ section .text
 call main2
 ret
 
+extern MSG
 VIDEO_MEMORY equ 0xb8000
 WHITE_ON_BLACK equ 0x0f ; the color byte for each character
 
@@ -33,6 +34,6 @@ main2:
 	call print_string_pm
 	ret
 
-MSG db "                msg from kernel 222222", 0
+; MSG db "                msg from kernel 222222", 0
 times 1024 - ($-$$) db 0
 finish2:
