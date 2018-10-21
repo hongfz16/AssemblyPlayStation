@@ -47,6 +47,7 @@ keyboard_handler:
     test ebx, 0xffffffff
     jz do_nothing
     pushad
+    push esi
     mov eax, esi
     call [kbd_callback]
     popad
@@ -59,14 +60,21 @@ keyboard_handler:
 
 
 kbd_hdl:
-;    pop eax
+; dd: esi [ebp+8]
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp+8]
+    
     cmp eax, 0x2d
     jne kbd_hdl_finish
     mov eax, TIMER
     push eax
     call kprint
     kbd_hdl_finish:
-    ret
+    
+    pop ebp
+    ret 4
 
 
 register_kbd_callback: ; eax: address, it can be 0
