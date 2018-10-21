@@ -20,6 +20,9 @@ kernel1.bin: kernel1.asm
 kernel2.bin: kernel2.asm
 	nasm $< -f bin -o $@
 
+dinosaur.bin: dinosaur.asm
+	nasm $< -f bin -o $@
+
 bootsect.bin: bootsect.asm
 	nasm $< -f bin -o $@
 
@@ -32,14 +35,14 @@ run: os-image.bin
 %.o: %.asm
 	nasm $< -f elf -o $@
 
-run-debug: bootsect.bin kernel1.o kernel2.o
-	$(LD) -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o --oformat binary
+run-debug: bootsect.bin kernel1.o kernel2.o dinosaur.o
+	$(LD) -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o dinosaur.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -fda os-image-debug.bin
 
-debug: bootsect.bin kernel1.o kernel2.o
-	$(LD) -o kernel.elf -Ttext 0x1000 kernel1.o kernel2.o
-	$(LD) -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o --oformat binary
+debug: bootsect.bin kernel1.o kernel2.o dinosaur.o
+	$(LD) -o kernel.elf -Ttext 0x1000 kernel1.o kernel2.o dinosaur.o
+	$(LD) -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o dinosaur.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -s -fda os-image-debug.bin &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"

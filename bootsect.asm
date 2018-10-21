@@ -1,6 +1,7 @@
 [org 0x7c00]
 KERNEL_OFFSET equ 0x1000 ; The same one we used when linking the kernel
 KERNEL2_OFFSET equ 0x2000
+DINASOUR_OFFSET equ 0x2400
 
     mov [BOOT_DRIVE], dl ; Remember that the BIOS sets us the boot drive in 'dl' on boot
     mov bp, 0x9000
@@ -36,6 +37,12 @@ load_kernel:
     mov cl, 10
     mov dl, [BOOT_DRIVE]
     call disk_load
+    mov bx, DINASOUR_OFFSET ; Read from disk and store in 0x2400
+    mov dh, 2
+    mov cl, 12
+    mov dl, [BOOT_DRIVE]
+    call disk_load
+
     ret
 
 [bits 32]
@@ -46,6 +53,8 @@ BEGIN_PM:
     call KERNEL_OFFSET ; Give control to the kernel
     
     call KERNEL2_OFFSET
+
+    call DINASOUR_OFFSET
 
 ;     mov ebx, MSG_OUT
 ;     call print_string_pm

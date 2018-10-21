@@ -14,12 +14,12 @@ keyboard_handler:
     push ax
     call port_byte_out
 
-    call clear_screen
-    push 10
-    push 10
-    mov eax, KEYBOARD
-    push eax
-    call kprint_at
+    ; call clear_screen
+    ; push 10
+    ; push 10
+    ; mov eax, KEYBOARD
+    ; push eax
+    ; call kprint_at
 
     mov ax, 0x60
     push ax
@@ -39,9 +39,9 @@ timer_handler:
     push ax
     call port_byte_out
 
-    mov eax, TIMER
-    push eax
-    call kprint
+    ; mov eax, TIMER
+    ; push eax
+    ; call kprint
     
     pop eax
     sti
@@ -248,7 +248,7 @@ main:
 
     ; INT 33
 
-    jmp $
+    ; jmp $
     ret
 
 _IDT times 256 dq 0

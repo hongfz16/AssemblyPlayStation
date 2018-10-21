@@ -161,6 +161,7 @@ print_char:
 	mov ebx, esp
 	push edx
 	push esi
+	push eax
 	;TODO: write more robust codes
 	
 	mov edx, [ebx+16]
@@ -203,6 +204,7 @@ print_char:
 		call set_cursor_offset
 		print_char_finish:
 	
+	pop eax
 	pop esi
 	pop edx
 	pop ebx
