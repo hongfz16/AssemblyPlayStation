@@ -33,8 +33,8 @@ keyboard_handler:
     je do_nothing
 
     add ebx, kbd_buf
-    cmp al, 0x35
-    jg do_nothing
+    cmp al, 0x30
+    ja do_nothing
     mov edx, scancode_trans
     add edx, eax
     mov al, [edx]
@@ -68,29 +68,35 @@ kbd_hdl:
     
     cmp eax, 0x2d
     jne kbd_hdl_finish
-    mov eax, TIMER
-    push eax
-    call kprint
+;    mov eax, TIMER
+;    push eax
+;    call kprint
+    call print_buff
     kbd_hdl_finish:
     
     pop ebp
     ret 4
 
-
-register_kbd_callback: ; eax: address, it can be 0
-    mov [kbd_callback], eax
-    ret
-
-register_tim_callback: ; eax: address
-    mov [tim_callback], eax
+print_buff:
+    print_buff_loop:
+    mov eax, 0
+    call getchar
+    cmp al, 0
+    je print_buff_done
+    mov [szFmt], al
+    push szFmt
+    call kprint
+    jmp print_buff_loop
+    print_buff_done:
     ret
 
 getchar:
 ;    pushad
+;    cli
     push ebx
     mov ebx, 0
     mov bl, [kbd_head]
-    inc ebx,
+    inc bl,
     cmp bl, [kbd_tail]
     je empty_buffer
     mov [kbd_head], bl
@@ -103,7 +109,17 @@ getchar:
 
     getchar_finish:
     pop ebx
+;    sti
  ;   popad
+    ret
+
+
+register_kbd_callback: ; eax: address, it can be 0
+    mov [kbd_callback], eax
+    ret
+
+register_tim_callback: ; eax: address
+    mov [tim_callback], eax
     ret
 
 timer_handler:
@@ -335,15 +351,6 @@ main:
     call register_kbd_callback
     pop eax
 
-    loop:
-    mov eax, 0
-    call getchar
-    cmp al, 0
-    je loop
-    mov [szFmt], al
-    push szFmt
-    call kprint
-    jmp loop
     ret
 
 
