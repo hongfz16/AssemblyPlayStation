@@ -3,9 +3,9 @@
 # $^ = all dependencies
 
 # First rule is the one executed when no parameters are fed to the Makefile
-GDB = /usr/local/i386elfgcc/bin/i386-elf-gdb
-LD = i386-elf-ld
-CC = i386-elf-gcc
+GDB = gdb
+LD = ld -m elf_i386
+CC = gcc
 NASM = nasm
 
 bootsect.bin: bootsect.asm
