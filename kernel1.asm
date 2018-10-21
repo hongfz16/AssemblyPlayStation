@@ -25,6 +25,8 @@ keyboard_handler:
     push ax
     mov eax, 0
     call port_byte_in
+    mov esi, eax
+;    push eax ; to give arg. to kbd_callback
     mov ebx, 0
     mov bl, [kbd_tail]
     cmp bl, [kbd_head]
@@ -41,13 +43,39 @@ keyboard_handler:
     inc bl
     mov [kbd_tail], bl
 
-
+    mov ebx, [kbd_callback]
+    test ebx, 0xffffffff
+    jz do_nothing
+    pushad
+    mov eax, esi
+    call [kbd_callback]
+    popad
 
     do_nothing:
 
     popad
     sti
     iret
+
+
+kbd_hdl:
+;    pop eax
+    cmp eax, 0x2d
+    jne kbd_hdl_finish
+    mov eax, TIMER
+    push eax
+    call kprint
+    kbd_hdl_finish:
+    ret
+
+
+register_kbd_callback: ; eax: address, it can be 0
+    mov [kbd_callback], eax
+    ret
+
+register_tim_callback: ; eax: address
+    mov [tim_callback], eax
+    ret
 
 getchar:
 ;    pushad
@@ -60,20 +88,20 @@ getchar:
     mov [kbd_head], bl
     add ebx, kbd_buf
     mov al, [ebx]
-    jmp finish
+    jmp getchar_finish
     empty_buffer:
     mov al, 0
-    jmp finish
+    jmp getchar_finish
 
-    finish:
+    getchar_finish:
     pop ebx
  ;   popad
     ret
 
 timer_handler:
     cli
-    push eax
-    
+;    push eax
+    pushad
     mov ax, 0x20
     push ax
     mov ax, 0x20
@@ -83,8 +111,13 @@ timer_handler:
 ;    mov eax, TIMER
 ;    push eax
 ;    call kprint
-    
-    pop eax
+    mov ebx, [tim_callback]
+    test ebx, 0xffffffff
+    jz timer_handler_finish
+    call tim_callback
+    timer_handler_finish:
+    popad
+;    pop eax
     sti
     iret
 
@@ -288,6 +321,12 @@ main:
     ; INT 33
 
     ;jmp $
+    reg_for_kbd:
+    push eax
+    mov eax, kbd_hdl
+    call register_kbd_callback
+    pop eax
+
     loop:
     mov eax, 0
     call getchar
@@ -297,19 +336,22 @@ main:
     push szFmt
     call kprint
     jmp loop
-
     ret
+
 
 _IDT times 256 dq 0
 IDT_REG times 6 db 0
+
 
 szFmt db 0,0
 KEYBOARD db "This is a message from keyboard interrupt!!", 0
 TIMER db "Timer!", 0
 MSG db "msg from kernel 111111", 0
-times 4096 - ($-$$) db 0
 kbd_buf times 256 db 0
 kbd_head db 255
 kbd_tail db 0
+kbd_callback dd 0
+tim_callback dd 0
 scancode_trans db 0,0x1b,"1234567890-+",0x08,0x09,"QWERTYUIOP[]",0x0a,0x0d,"ASDFGHJKL",0x3b,0x27,0x60,".",0x5c,"ZXCVBNM",0x2c,"./.",0,0,0,0,0,0,0,0,0,0
 finish1:
+times 4096 - ($-$$) db 0
