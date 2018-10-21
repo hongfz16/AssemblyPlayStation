@@ -3,11 +3,13 @@ section .text
 call main
 ret
 
-%include "./utils/vga_driver.asm"
-%include "./utils/random.asm"
-%include "./utils/itoa.asm"
-
-global MSG
+extern init_seed
+extern rand_num
+extern clear_screen
+extern kprint
+extern kprint_at
+extern print_char
+extern int_to_ascii
 
 keyboard_handler:
     cli

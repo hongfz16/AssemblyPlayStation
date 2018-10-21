@@ -25,8 +25,17 @@ run: os-image.bin
 %.o: %.asm
 	nasm $< -f elf -o $@
 
-run-debug: bootsect.bin kernel1.o kernel2.o
-	i386-elf-ld -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o --oformat binary
+itoa.o: utils/itoa.asm
+	nasm $< -f elf -o $@
+
+random.o: utils/random.asm
+	nasm $< -f elf -o $@
+
+vga_driver.o: utils/vga_driver.asm
+	nasm $< -f elf -o $@
+
+run-debug: bootsect.bin kernel1.o kernel2.o itoa.o random.o vga_driver.o
+	i386-elf-ld -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o itoa.o random.o vga_driver.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -fda os-image-debug.bin
 

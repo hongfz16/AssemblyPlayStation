@@ -1,5 +1,8 @@
 [bits 32]
 
+global init_seed
+global rand_num
+
 A equ 1103515245
 C equ 12345
 MODU  equ 0x80000000

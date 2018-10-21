@@ -2,6 +2,11 @@
 ; Mocked VGA Driver providing two print function
 [bits 32]
 
+global clear_screen
+global kprint_at
+global kprint
+global print_char
+
 ; Define VGA Constants
 VIDEO_ADDRESS equ 0xb8000
 MAX_ROWS equ 25

@@ -1,5 +1,7 @@
 [bits 32]
 
+global int_to_ascii
+
 int_to_ascii:
 ;--------------
 ; dd: int [ebp+8]
