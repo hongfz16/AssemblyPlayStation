@@ -40,11 +40,12 @@ load_kernel:
 
 [bits 32]
 BEGIN_PM:
-    mov ebx, MSG_PROT_MODE
-    call print_string_pm
+    ; mov ebx, MSG_PROT_MODE
+    ; call print_string_pm
     
     call KERNEL_OFFSET ; Give control to the kernel
     
+    jmp $
     call KERNEL2_OFFSET
 
 ;     mov ebx, MSG_OUT

@@ -23,7 +23,9 @@ int_to_ascii:
 		mov ebx, [ecx]
 		div ebx
 		add eax, '0'
+		new_int_out:
 		mov [esi], al
+		after_mov_int:
 		add esi, 1
 		mov eax, edx
 		mov edx, 0

@@ -264,10 +264,15 @@ main:
     ;     jmp main1_loop
 
     call init_seed
+    mov eax, 0x0
+    in_rand_num:
     call rand_num
-    push eax
+    out_rand_num:
     push randnumber
+    push eax
     call int_to_ascii
+    push randnumber
+    call kprint
 
     ret
 

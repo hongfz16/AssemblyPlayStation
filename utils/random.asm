@@ -6,9 +6,9 @@ MODU  equ 0x80000000
 
 init_seed:
 	mov ah, 0x00
-	int 1ah
-	mov [seed], dx
-	mov [seed+2], cx
+	; int 1ah
+	mov [seed], word 0xf2
+	mov [seed+2], word 0xf5
 	ret
 
 rand_num:
@@ -37,6 +37,6 @@ rand_num:
 	pop edx
 	pop ebx
 	pop ebp
-	ret 4
+	ret
 
 seed dd 0x0
