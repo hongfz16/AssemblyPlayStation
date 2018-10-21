@@ -347,11 +347,85 @@ main:
     ;jmp $
     reg_for_kbd:
     push eax
-    mov eax, kbd_hdl
+    mov eax, kbd_callback_menu
     call register_kbd_callback
     pop eax
 
     ret
+
+
+kbd_callback_menu:
+; A: 1E
+; S: 1F
+; D: 20
+; w: 11
+    push ebp
+    mov ebp, esp
+
+    mov eax, [ebp+8]
+    mov ebx, [curGame]
+    kbd_call_menu_check_up:
+    cmp eax, 0x11
+    jne kbd_call_menu_check_down
+
+    dec ebx
+    cmp ebx, 0
+    jne kbd_callback_menu_finish
+    mov ebx, GAMENUM
+    jmp kbd_callback_menu_finish
+
+    kbd_call_menu_check_down:
+    cmp eax, 0x1f
+    jne kbd_callback_menu_finish
+
+    inc ebx
+    cmp ebx, GAMENUM + 1
+    jne kbd_callback_menu_finish
+    mov ebx, 1
+;    jmp kbd_callback_menu_finish
+    kbd_callback_menu_finish:
+    mov [curGame], ebx
+
+
+;    mov ecx, [curGame]
+;    mov esi,
+    call clear_screen
+
+    pushad
+    mov eax, ebx
+    push eax
+    mov eax, 3
+    push eax
+    mov eax, SArrow
+    push eax
+    call kprint_at
+    popad
+
+    mov ecx, GAMENUM
+    mov esi,NameList + 4
+    mov ebx, 1
+    kbd_callback_menu_loop:
+    pushad
+    mov edx, [esi]
+;    mov eax, [edx]
+;    mov edx, eax
+    mov eax, ebx
+    push eax
+    mov eax, 8
+    push eax
+    mov eax, edx
+    push edx
+    call kprint_at
+    popad
+    dec ecx
+    add esi, 4
+    inc ebx
+    test ecx, 0xffffffff
+    jnz kbd_callback_menu_loop
+
+
+    pop ebp
+    ret 4
 
 
 _IDT times 256 dq 0
@@ -368,5 +442,16 @@ kbd_tail db 0
 kbd_callback dd 0
 tim_callback dd 0
 scancode_trans db 0,0x1b,"1234567890-+",0x08,0x09,"QWERTYUIOP[]",0x0a,0x0d,"ASDFGHJKL",0x3b,0x27,0x60,".",0x5c,"ZXCVBNM",0x2c,"./.",0,0,0,0,0,0,0,0,0,0
+
+Name1 db "game1", 0
+Name2 db "game2", 0
+Name3 db "game3", 0
+Name4 db "game3", 0
+Name5 db "game3", 0
+curGame dd 1
+GAMENUM equ 5
+NameList dd 0, Name1, Name2, Name3, Name3, Name5
+SArrow db "->",0
+
 finish1:
 times 4096 - ($-$$) db 0
