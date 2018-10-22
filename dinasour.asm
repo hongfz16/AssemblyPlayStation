@@ -121,6 +121,11 @@ print_player:
 ; Params:
 ;		dd row [esp+8]
 ;       dd col [esp+12]
+;      @      @
+;      |      |
+;   -+-+   -+-+
+;    / /    \ \
+;
 ;==============================
 	push ebp
 	mov ebp, esp
@@ -130,29 +135,75 @@ print_player:
 	push edx
 
 	mov eax, [ebp+8]
-	mov ecx, dword player_height
-	print_player_L1:
-		inc eax
-		push ecx
+	inc eax
+	mov ebx, [ebp+12]
+	add ebx, 3
+	push eax
+	push ebx
+	mov edx, '@'
+	push edx
+	call safe_put_char
 
-		mov ebx, [ebp+12]
-		mov ecx, dword player_width
-		print_player_L1_L1:
-			;--------------------------------------------
-			; push params
-			push eax
-			push ebx
-			mov edx, '*'
-			push edx
-			;--------------------------------------------
-			; call print function
-			call safe_put_char
-			;--------------------------------------------
-			inc ebx
-		loop print_player_L1_L1
+	inc eax
+	push eax
+	push ebx
+	mov edx, '|'
+	push edx
+	call safe_put_char
 
-		pop ecx
-	loop print_player_L1
+	inc eax
+	mov ebx, [ebp+12]
+	push eax
+	push ebx
+	mov edx, '-'
+	push edx
+	call safe_put_char
+
+	inc ebx
+	push eax
+	push ebx
+	mov edx, '+'
+	push edx
+	call safe_put_char
+
+	inc ebx
+	push eax
+	push ebx
+	mov edx, '-'
+	push edx
+	call safe_put_char
+
+	inc ebx
+	push eax
+	push ebx
+	mov edx, '+'
+	push edx
+	call safe_put_char
+
+
+	mov edx, '/'
+	mov ecx, [frame]
+	test ecx, 0x4
+	; cmp ecx, 0
+	je print_player_odd_frame1
+	mov edx, '\'
+	print_player_odd_frame1:
+
+
+	inc eax
+	mov ebx, [ebp+12]
+	inc ebx
+	push eax
+	push ebx
+	push edx
+	call safe_put_char
+
+	add ebx, 2
+	push eax
+	push ebx
+	push edx
+	call safe_put_char	
+
 
 	pop edx
 	pop ebx
@@ -394,13 +445,15 @@ dinosaur_callback:
 	push eax
 	push ebx
 
+	add [frame], dword 1
 	mov eax, dword [frame]
-	add eax, 1
-	mov [frame], eax
-	cmp eax, 2
-	jl dinosaur_callback_funcEnd
+	and eax, 0x1
+	; add eax, 1
+	; mov [frame], eax
+	cmp eax, 0
+	jne dinosaur_callback_funcEnd
 
-	mov [frame], dword 0
+	; mov [frame], dword 0
 	; call clear_screen
 	; push NUM
 	; push eax
@@ -430,27 +483,27 @@ dinosaur_callback:
 
 	dinosaur_callback_funcEnd:
 
-	mov eax, 0
-	mov al, byte [gameStatus]
-	push RANDNUM
-	push eax
-	call int_to_ascii
-	mov eax, 0
-	push eax
-	push eax
-	push RANDNUM
-	call kprint_at
+	; mov eax, 0
+	; mov al, byte [gameStatus]
+	; push RANDNUM
+	; push eax
+	; call int_to_ascii
+	; mov eax, 0
+	; push eax
+	; push eax
+	; push RANDNUM
+	; call kprint_at
 
-	mov eax, dword [frame]
-	push RANDNUM
-	push eax
-	call int_to_ascii
-	mov eax, 1
-	push eax
-	mov eax, 0
-	push eax
-	push RANDNUM
-	call kprint_at
+	; mov eax, dword [frame]
+	; push RANDNUM
+	; push eax
+	; call int_to_ascii
+	; mov eax, 1
+	; push eax
+	; mov eax, 0
+	; push eax
+	; push RANDNUM
+	; call kprint_at
 
 	pop ebx
 	pop eax
@@ -665,7 +718,7 @@ NUM db 0,0,0,0,0,0,0,0,0,0,0,0,0,0
 frame dd 0
 
 obstacle_height equ 3
-obstacle_width equ 3
+obstacle_width equ 2
 player_height equ 4
 player_width equ 4
 velocity equ 2
