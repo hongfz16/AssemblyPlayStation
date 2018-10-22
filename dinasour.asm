@@ -354,21 +354,26 @@ dinosaur_random_add:
 	;-----------------------------------------------
 	dinosaur_random_add_has_obstacle:
 	;-----------------------------------------------
-	; if last obstacle pos_x <= 65
+	; if last obstacle pos_x <= random_num(20~52)
+	call rand_num
+	and eax, 0x3F
+	add eax, 0
+	mov [random_num], eax
+
 	mov ebx, 0
 	mov bl, [num_obstacles]
-	cmp [obstacles+ebx-1], byte 65
+	cmp [obstacles+ebx-1], al
 	jg dinosaur_random_add_funcEnd
 	;-----------------------------------------------
 		;-----------------------------------------------
 		; random add
-		call rand_num
+		; call rand_num
 		; dinosaur_random_add_debug1:
-		and eax, 0x1F
-		mov [random_num], eax
+		; and eax, 0x1F
+		; mov [random_num], eax
 		; dinosaur_random_add_debug2:
-		cmp eax, 0
-		jne dinosaur_random_add_funcEnd
+		; cmp eax, 0
+		; jne dinosaur_random_add_funcEnd
 		;-----------------------------------------------
 			mov [obstacles+ebx], byte 80
 			add [num_obstacles], byte 1
