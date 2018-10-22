@@ -6,8 +6,7 @@ global clear_screen
 global kprint_at
 global kprint
 global put_char
-GLOBAL WHITE_ON_BLACK
-GLOBAL RED_ON_WHITE
+global print_char
 
 ; Define VGA Constants
 VIDEO_ADDRESS equ 0xb8000
@@ -64,6 +63,7 @@ kprint_at:
 	push eax
 	push ecx
 	push edx
+	push esi
 	
 	mov esi, [ebx+8]
 
@@ -119,6 +119,7 @@ kprint_at:
 
 	kprint_while_done:
 
+	pop esi
 	pop edx
 	pop ecx
 	pop eax

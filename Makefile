@@ -23,14 +23,17 @@ random.o: utils/random.asm
 vga_driver.o: utils/vga_driver.asm
 	${NASM} $< -f elf -o $@
 
-run-debug: bootsect.bin main.o kernel.o itoa.o random.o vga_driver.o
-	${LD} -o kernel.bin -Ttext 0x1000 main.o kernel.o itoa.o random.o vga_driver.o --oformat binary
+get_time.o: utils/get_time.asm
+	${NASM} $< -f elf -o $@
+
+run-debug: bootsect.bin main.o menu.o clock.o dinasour.o itoa.o random.o vga_driver.o get_time.o
+	${LD} -o kernel.bin -Ttext 0x1000 main.o menu.o clock.o dinasour.o itoa.o random.o vga_driver.o get_time.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -fda os-image-debug.bin
 
-debug: bootsect.bin main.o kernel.o itoa.o random.o vga_driver.o
-	${LD} -o kernel.elf -Ttext 0x1000 main.o kernel.o itoa.o random.o vga_driver.o
-	${LD} -o kernel.bin -Ttext 0x1000 main.o kernel.o itoa.o random.o vga_driver.o --oformat binary
+debug: bootsect.bin main.o menu.o clock.o dinasour.o itoa.o random.o vga_driver.o get_time.o
+	${LD} -o kernel.elf -Ttext 0x1000 main.o menu.o clock.o dinasour.o itoa.o random.o vga_driver.o get_time.o
+	${LD} -o kernel.bin -Ttext 0x1000 main.o menu.o clock.o dinasour.o itoa.o random.o vga_driver.o get_time.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -s -fda os-image-debug.bin &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
