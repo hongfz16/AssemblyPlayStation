@@ -18,11 +18,62 @@ EXTERN RED_ON_WHITE
 
 
 ;==============================
+safe_put_char:
+; print char safely
+;	Params: dd: chr, [ebx+8]
+;			dd: col, [ebx+12]
+;			dd: row, [ebx+16]
+	push ebp
+	mov ebp, esp
+	push eax
+	push ebx
+	push ecx
+	push edx
+
+	mov eax, [ebp+8]
+	mov ebx, [ebp+12]
+	mov ecx, [ebp+16]
+	mov edx, dword WHITE_ON_BLACK
+	safe_put_char_debug1:
+	;-----------------------------------------
+	; make sure row >= 0
+	cmp ecx, 0
+	jl safe_put_char_funcEnd
+	;-----------------------------------------
+	; make sure row < 25
+	cmp ecx, 25
+	jge safe_put_char_funcEnd
+	;-----------------------------------------
+	; make sure col >= 0
+	cmp ebx, 0
+	jl safe_put_char_funcEnd
+	;-----------------------------------------
+	; make sure col < 80
+	cmp ebx, 80
+	jge safe_put_char_funcEnd
+	;-----------------------------------------
+
+	push edx
+	push ecx
+	push ebx
+	push eax
+	call put_char
+	safe_put_char_debug2:
+
+	safe_put_char_funcEnd:
+	pop edx
+	pop ecx
+	pop ebx
+	pop eax
+	pop ebp
+	ret 12
+
+;==============================
 print_obstacle:
 ; print obstacle on screen
 ; Params:
-;		dd row [ebx+8]
-;		dd col [ebx+12]
+;		dd row [esp+8]
+;		dd col [esp+12]
 ;==============================
 	push ebp
 	mov ebp, esp
@@ -36,50 +87,25 @@ print_obstacle:
 	print_obstacle_L1:
 		push ecx
 
-		cmp eax, 0
-		jl print_obstacle_L1_continue
-
 		mov ebx, [ebp+12]
 		mov ecx, dword obstacle_width
-		; print_obstacle_debug2:
 		print_obstacle_L1_L1:
-			cmp ebx, 0
-			jl print_obstacle_L1_L1_continue
-
 			;--------------------------------------------
 			; push params
-			mov edx, dword WHITE_ON_BLACK
-			push edx
 			push eax
 			push ebx
 			mov edx, '#'
 			push edx
 			;--------------------------------------------
-			; call function
-			call put_char
+			; call print function
+			call safe_put_char
 			;--------------------------------------------
-			; print_obstacle_debug1:
-
-
-			print_obstacle_L1_L1_continue:
 			inc ebx
-			cmp ebx, 80
-			jge print_obstacle_L1_L1_end
-			; cmp ebx, 0
-			; jl print_obstacle_L1_L1_end
 		loop print_obstacle_L1_L1
-		print_obstacle_L1_L1_end:
 
-
-		print_obstacle_L1_continue:
 		inc eax
 		pop ecx
-		cmp eax, 25
-		jge print_obstacle_L1_end
-		; cmp eax, 0
-		; jl print_obstacle_L1_end
 	loop print_obstacle_L1
-	print_obstacle_L1_end:
 
 	pop edx
 	pop ebx
@@ -93,60 +119,46 @@ print_obstacle:
 print_player:
 ; print player on screen
 ; Params:
-;		dd row [ebx+8]
-;       dd col [ebx+12]
+;		dd row [esp+8]
+;       dd col [esp+12]
 ;==============================
-	push ebx
-	mov ebx, esp
+	push ebp
+	mov ebp, esp
 	push ecx
 	push eax
+	push ebx
 	push edx
 
-	mov eax, [ebx+8]
-	mov ecx, 0
+	mov eax, [ebp+8]
+	mov ecx, dword player_height
 	print_player_L1:
-		cmp ecx, player_height
-		je print_player_L1_end
-
 		inc eax
-
 		push ecx
-		mov ecx, 0
-		
-		mov edx, [ebx+12]
-		print_player_L1_L1:
-			cmp ecx, player_width
-			je print_player_L1_L1_end
 
-			push ecx
+		mov ebx, [ebp+12]
+		mov ecx, dword player_width
+		print_player_L1_L1:
 			;--------------------------------------------
 			; push params
-			mov ecx, WHITE_ON_BLACK
-			push ecx
 			push eax
+			push ebx
+			mov edx, '*'
 			push edx
-			inc edx
-			mov ecx, '*'
-			push ecx
 			;--------------------------------------------
-			; call function
-			call put_char
+			; call print function
+			call safe_put_char
 			;--------------------------------------------
-			pop ecx
-
-			inc ecx
-			jmp print_player_L1_L1
-		print_player_L1_L1_end:
+			inc ebx
+		loop print_player_L1_L1
 
 		pop ecx
-		inc ecx
-		jmp print_player_L1
-	print_player_L1_end:
+	loop print_player_L1
 
 	pop edx
+	pop ebx
 	pop eax
 	pop ecx
-	pop ebx
+	pop ebp
 	ret 8
 
 kbd_handler:
@@ -220,6 +232,9 @@ dinosaur_move:
 		sub [player_acc_y], byte 1
 		; mov al, [player_acc_y]
 		; dinosaur_move_debug2:
+		; cmp [player_pos_y], byte 20
+		; jg dinosaur_move_endif1
+		; 	mov [player_pos_y], byte 20
 		jmp dinosaur_move_endif1
 	;----------------------------------------------
 	; else player_pos_y >= 20
@@ -368,10 +383,10 @@ dinosaur_gameOver:
 	mov eax, infoGameOver
 	push eax
 	call kprint_at
-	dinosaur_gameOver_debug:
+	; dinosaur_gameOver_debug:
 	mov [frame], dword 0
 	
-	dinosaur_gameOver_funcEnd:
+	; dinosaur_gameOver_funcEnd:
 	pop eax
 	ret
 
@@ -379,11 +394,11 @@ dinosaur_callback:
 	push eax
 	push ebx
 
-	mov eax, [frame]
-	inc eax
+	mov eax, dword [frame]
+	add eax, 1
 	mov [frame], eax
 	cmp eax, 2
-	jne dinosaur_callback_funcEnd
+	jl dinosaur_callback_funcEnd
 
 	mov [frame], dword 0
 	; call clear_screen
@@ -414,6 +429,29 @@ dinosaur_callback:
 		dinosaur_callback_gameStatusNotEqual2:
 
 	dinosaur_callback_funcEnd:
+
+	mov eax, 0
+	mov al, byte [gameStatus]
+	push RANDNUM
+	push eax
+	call int_to_ascii
+	mov eax, 0
+	push eax
+	push eax
+	push RANDNUM
+	call kprint_at
+
+	mov eax, dword [frame]
+	push RANDNUM
+	push eax
+	call int_to_ascii
+	mov eax, 1
+	push eax
+	mov eax, 0
+	push eax
+	push RANDNUM
+	call kprint_at
+
 	pop ebx
 	pop eax
 	ret

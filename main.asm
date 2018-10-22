@@ -51,6 +51,9 @@ keyboard_handler:
     inc bl
     mov [kbd_tail], bl
 
+
+
+    do_nothing:
     mov ebx, [kbd_callback]
     test ebx, 0xffffffff
     jz do_nothing
@@ -59,8 +62,6 @@ keyboard_handler:
     mov eax, esi
     call [kbd_callback]
     popad
-
-    do_nothing:
 
     popad
     sti
