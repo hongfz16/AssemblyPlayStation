@@ -98,8 +98,8 @@ main:
     push clock_tim_callback
     call register_tim_callback
 
-    ; push MSG
-    ; call kprint
+    push MSG
+    call kprint
 
     check_quit_loop:
     	cmp [QUIT_CHECK], byte 0
@@ -111,6 +111,6 @@ QUIT_CHECK db 0
 SECOND_STR db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 SECOND dd 0
 RANDNUM db 0,0,0,0,0,0,0,0,0,0,0,0,0,0
-MSG db "Message from kernel2 ", 0
+MSG db "Press 'Q' to exit", 0
 KBD db "KBD", 0
 times 2048 - ($-$$) db 0

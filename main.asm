@@ -395,7 +395,7 @@ main:
     mov ax, 0x40
     push ax
     call port_byte_out
-    mov ax, 0xa0
+    mov ax, 0x5d
     push ax
     mov ax, 0x40
     push ax

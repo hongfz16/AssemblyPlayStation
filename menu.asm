@@ -14,13 +14,55 @@ extern port_byte_in
 
 main:
     reg_for_kbd:
-    push eax
     mov eax, kbd_callback_menu
     push eax
     call register_kbd_callback
-    pop eax
+    call menu_render
+    jmp $
     ret
 
+menu_render:
+    mov ebx, [curGame]
+    call clear_screen
+
+    push dword 0
+    push dword 0
+    push HELP_INFO
+    call kprint_at
+
+    pushad
+    mov eax, ebx
+    inc eax
+    push eax
+    mov eax, 3
+    push eax
+    mov eax, SArrow
+    push eax
+    call kprint_at
+    popad
+
+    mov ecx, GAMENUM
+    mov esi,NameList + 4
+    mov ebx, 2
+    kbd_callback_menu_loop:
+    pushad
+    mov edx, [esi]
+;    mov eax, [edx]
+;    mov edx, eax
+    mov eax, ebx
+    push eax
+    mov eax, 8
+    push eax
+    mov eax, edx
+    push edx
+    call kprint_at
+    popad
+    dec ecx
+    add esi, 4
+    inc ebx
+    test ecx, 0xffffffff
+    jnz kbd_callback_menu_loop
+    ret
 
 kbd_callback_menu:
 ; A: 1E
@@ -82,42 +124,48 @@ kbd_callback_menu:
     kbd_callback_menu_finish:
     mov [curGame], ebx
 
-
+    call menu_render
 ;    mov ecx, [curGame]
 ;    mov esi,
-    call clear_screen
+;     call clear_screen
 
-    pushad
-    mov eax, ebx
-    push eax
-    mov eax, 3
-    push eax
-    mov eax, SArrow
-    push eax
-    call kprint_at
-    popad
+;     push dword 0
+;     push dword 0
+;     push HELP_INFO
+;     call kprint_at
 
-    mov ecx, GAMENUM
-    mov esi,NameList + 4
-    mov ebx, 1
-    kbd_callback_menu_loop:
-    pushad
-    mov edx, [esi]
-;    mov eax, [edx]
-;    mov edx, eax
-    mov eax, ebx
-    push eax
-    mov eax, 8
-    push eax
-    mov eax, edx
-    push edx
-    call kprint_at
-    popad
-    dec ecx
-    add esi, 4
-    inc ebx
-    test ecx, 0xffffffff
-    jnz kbd_callback_menu_loop
+;     pushad
+;     mov eax, ebx
+;     inc eax
+;     push eax
+;     mov eax, 3
+;     push eax
+;     mov eax, SArrow
+;     push eax
+;     call kprint_at
+;     popad
+
+;     mov ecx, GAMENUM
+;     mov esi,NameList + 4
+;     mov ebx, 2
+;     kbd_callback_menu_loop:
+;     pushad
+;     mov edx, [esi]
+; ;    mov eax, [edx]
+; ;    mov edx, eax
+;     mov eax, ebx
+;     push eax
+;     mov eax, 8
+;     push eax
+;     mov eax, edx
+;     push edx
+;     call kprint_at
+;     popad
+;     dec ecx
+;     add esi, 4
+;     inc ebx
+;     test ecx, 0xffffffff
+;     jnz kbd_callback_menu_loop
 
     kbd_callback_menu_ret:
     pop ebp
@@ -142,16 +190,17 @@ kbd_callback dd 0
 tim_callback dd 0
 scancode_trans db 0,0x1b,"1234567890-+",0x08,0x09,"QWERTYUIOP[]",0x0a,0x0d,"ASDFGHJKL",0x3b,0x27,0x60,".",0x5c,"ZXCVBNM",0x2c,"./.",0,0,0,0,0,0,0,0,0,0
 
-Name1 db "1", 0
-Name2 db "2", 0
-Name3 db "3", 0
-Name4 db "4", 0
-Name5 db "5", 0
+Name1 db "Clock", 0
+Name2 db "Dinasour", 0
+Name3 db "Stopwatch", 0
+
+HELP_INFO db "Please use 'W' and 'S' to choose; Press 'J' to enter the program;"
 
 curGame dd 1
-GAMENUM equ 5
-NameList dd 0, Name1, Name2, Name3, Name4, Name5
-GameList dd 0, 0x3000, 0x3800, 0x3000, 0x3000, 0x3000
+always0 dd 0
+GAMENUM equ 3
+NameList dd 0, Name1, Name2, Name3
+GameList dd 0, 0x3000, 0x3800, 0x3800
 
 SArrow db "->",0
 
