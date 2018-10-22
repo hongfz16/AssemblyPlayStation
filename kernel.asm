@@ -45,8 +45,8 @@ tim_callback:
 	mov [SECOND], eax
 	push SECOND_STR
 	call get_time_str
-	push dword 0
-	push dword 0
+	push dword 12
+	push dword 30
 	push SECOND_STR
 	call kprint_at
 
@@ -77,6 +77,7 @@ main:
     ; push kbd_callback
     ; call register_kbd_callback
 ; register timer
+	call clear_screen
     push tim_callback
     call register_tim_callback
     jmp $

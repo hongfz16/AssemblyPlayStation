@@ -182,7 +182,7 @@ get_time_str:
 	mov [esi+1], bl
 	add esi, 2
 
-	mov [esi], byte ' '
+	mov [esi], byte '  '
 	add esi, 1
 
 	mov eax, 0x0
