@@ -112,7 +112,6 @@ get_time_str:
 ; dd: straddr [ebp+8]
 	push ebp
 	mov ebp, esp
-	sub esp, 4
 	push esi
 	push eax
 	push ebx
@@ -182,7 +181,7 @@ get_time_str:
 	mov [esi+1], bl
 	add esi, 2
 
-	mov [esi], byte '  '
+	mov [esi], byte ' '
 	add esi, 1
 
 	mov eax, 0x0
@@ -238,7 +237,6 @@ get_time_str:
 	pop ebx
 	pop eax
 	pop esi
-	add esp, 4
 	pop ebp
 	ret 4
 

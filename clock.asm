@@ -28,15 +28,30 @@ extern get_century
 extern get_time_int
 extern get_time_str
 
-; kbd_callback:
-;     push KBD
-;     call kprint
-;     ret 4
+kbd_callback:
+    ; push KBD
+    ; call kprint
+    push ebp
+    mov ebp, esp
+    push eax
 
-tim_callback:
+    mov eax, [ebp+8]
+    cmp eax, 0x10
+    jne clock_kbd_callback_do_nothing
+
+    mov [QUIT_CHECK], byte 1
+
+    clock_kbd_callback_do_nothing
+    pop eax
+    pop ebp
+    ret 4
+
+clock_tim_callback:
 	push eax
 	push ebx
+	push dword 0xdeadbeef
 	
+	mov eax, 0x0
 	call get_second
 
 	cmp eax, [SECOND]
@@ -51,6 +66,7 @@ tim_callback:
 	call kprint_at
 
 	tim_callback_do_nothing:
+	pop ebx
 	pop ebx
 	pop eax
 	ret
@@ -74,18 +90,27 @@ main:
 	; loop_done:
 
 ; register kbd
-    ; push kbd_callback
-    ; call register_kbd_callback
+	clock_register_kbd_start:
+    push kbd_callback
+    call register_kbd_callback
 ; register timer
 	call clear_screen
-    push tim_callback
+    push clock_tim_callback
     call register_tim_callback
-    jmp $
+
+    ; push MSG
+    ; call kprint
+
+    check_quit_loop:
+    	cmp [QUIT_CHECK], byte 0
+    	je check_quit_loop
+    mov [QUIT_CHECK], byte 0
 	ret
 
+QUIT_CHECK db 0
 SECOND_STR db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 SECOND dd 0
 RANDNUM db 0,0,0,0,0,0,0,0,0,0,0,0,0,0
 MSG db "Message from kernel2 ", 0
 KBD db "KBD", 0
-times 1024 - ($-$$) db 0
+times 2048 - ($-$$) db 0
