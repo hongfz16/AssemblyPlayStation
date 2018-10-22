@@ -185,7 +185,7 @@ print_player:
 	mov ecx, [frame]
 	test ecx, 0x4
 	; cmp ecx, 0
-	je print_player_odd_frame1
+	jz print_player_odd_frame1
 	mov edx, '\'
 	print_player_odd_frame1:
 
@@ -354,17 +354,18 @@ dinosaur_random_add:
 	;-----------------------------------------------
 	dinosaur_random_add_has_obstacle:
 	;-----------------------------------------------
-	; if last obstacle pos_x <= 60
+	; if last obstacle pos_x <= 65
 	mov ebx, 0
 	mov bl, [num_obstacles]
-	cmp [obstacles+ebx-1], byte 60
+	cmp [obstacles+ebx-1], byte 65
 	jg dinosaur_random_add_funcEnd
 	;-----------------------------------------------
 		;-----------------------------------------------
 		; random add
 		call rand_num
 		; dinosaur_random_add_debug1:
-		and eax, 0x7
+		and eax, 0x1F
+		mov [random_num], eax
 		; dinosaur_random_add_debug2:
 		cmp eax, 0
 		jne dinosaur_random_add_funcEnd
@@ -447,11 +448,11 @@ dinosaur_callback:
 
 	add [frame], dword 1
 	mov eax, dword [frame]
-	and eax, 0x1
+	test eax, 0x2
 	; add eax, 1
 	; mov [frame], eax
-	cmp eax, 0
-	jne dinosaur_callback_funcEnd
+	; cmp eax, 0
+	jnz dinosaur_callback_funcEnd
 
 	; mov [frame], dword 0
 	; call clear_screen
@@ -483,16 +484,17 @@ dinosaur_callback:
 
 	dinosaur_callback_funcEnd:
 
-	; mov eax, 0
-	; mov al, byte [gameStatus]
-	; push RANDNUM
-	; push eax
-	; call int_to_ascii
-	; mov eax, 0
-	; push eax
-	; push eax
-	; push RANDNUM
-	; call kprint_at
+	pushad
+	mov eax, dword [random_num]
+	push RANDNUM
+	push eax
+	call int_to_ascii
+	mov eax, 0
+	push eax
+	push eax
+	push RANDNUM
+	call kprint_at
+	popad
 
 	; mov eax, dword [frame]
 	; push RANDNUM
@@ -701,8 +703,10 @@ main:
     mov [dinosaur_esc], byte 0
 	ret
 
+random_num dd 0
+
 dinosaur_esc db 0
-RANDNUM db 0,0,0,0,0,0,0,0,0,0,0,0,0,0
+RANDNUM db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 MSG db "Message from kernel 2", 0
 KBD db "KBD", 0
 infoGameOver db "Game Over!", 0
