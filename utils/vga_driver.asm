@@ -5,7 +5,9 @@
 global clear_screen
 global kprint_at
 global kprint
-global print_char
+global put_char
+GLOBAL WHITE_ON_BLACK
+GLOBAL RED_ON_WHITE
 
 ; Define VGA Constants
 VIDEO_ADDRESS equ 0xb8000
@@ -104,10 +106,10 @@ kprint_at:
 		push eax
 		mov eax, 0
 		mov al, [esi]
-		before_print_char:
+		; before_print_char:
 		push eax
 		call print_char
-		after_print_char:
+		; after_print_char:
 		mov [ebx-4], eax
 		add esi, 1
 		mov al, [esi]
@@ -144,6 +146,74 @@ kprint:
 	pop eax
 	pop ebx
 	ret 4
+
+;----------------------------------
+put_char:
+;	Print single char on screen for public
+;	at certain place
+;	If col or row is invalid
+;	then will print at current cur
+;	Attr means the color info
+;	Params: dd: chr, [ebx+8]
+;			dd: col, [ebx+12]
+;			dd: row, [ebx+16]
+;			dd: attr, [ebx+20]
+;	Return: eax
+;----------------------------------
+	push ebx
+	mov ebx, esp
+	push edx
+	push esi
+	push eax
+	push ecx
+	;TODO: write more robust codes
+	
+	mov edx, [ebx+16]
+	cmp edx, MAX_ROWS
+	jge put_char_print_char_illegel
+	mov edx, [ebx+12]
+	cmp edx, MAX_COLS
+	jge put_char_print_char_illegel
+	jmp put_char_print_char_legel
+
+	put_char_print_char_illegel:
+		mov esi, VIDEO_ADDRESS
+		add esi, VIDEO_SIZE
+		add esi, VIDEO_SIZE
+		sub esi, 2
+		mov dl, 'E'
+		mov dh, RED_ON_WHITE
+		mov [esi], dx
+		mov edx, [ebx+16]
+		push edx
+		mov edx, [ebx+12]
+		push edx
+		call calc_offset
+		jmp put_char_print_char_finish
+
+	put_char_print_char_legel:
+		mov edx, [ebx+16]
+		push edx
+		mov edx, [ebx+12]
+		push edx
+		call calc_offset
+		mov ecx, [ebx+8]
+		mov edx, [ebx+20]
+		mov ch, dl
+		mov edx, VIDEO_ADDRESS
+		add edx, eax
+		mov [edx], cx
+		add eax, 2
+		push eax
+		call set_cursor_offset
+		put_char_print_char_finish:
+
+	pop ecx
+	pop eax
+	pop esi
+	pop edx
+	pop ebx
+	ret 16
 
 ;==================================
 ; Private VGA utils
@@ -207,7 +277,7 @@ print_char:
 		push eax
 		call set_cursor_offset
 		print_char_finish:
-	
+
 	pop esi
 	pop edx
 	pop ebx
