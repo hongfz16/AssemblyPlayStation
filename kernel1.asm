@@ -58,25 +58,6 @@ keyboard_handler:
     sti
     iret
 
-
-kbd_hdl:
-; dd: esi [ebp+8]
-    push ebp
-    mov ebp, esp
-    
-    mov eax, [ebp+8]
-    
-    cmp eax, 0x2d
-    jne kbd_hdl_finish
-;    mov eax, TIMER
-;    push eax
-;    call kprint
-    call print_buff
-    kbd_hdl_finish:
-    
-    pop ebp
-    ret 4
-
 print_buff:
     print_buff_loop:
     mov eax, 0
@@ -359,6 +340,7 @@ kbd_callback_menu:
 ; S: 1F
 ; D: 20
 ; w: 11
+; J: 24
     push ebp
     mov ebp, esp
 
@@ -376,13 +358,27 @@ kbd_callback_menu:
 
     kbd_call_menu_check_down:
     cmp eax, 0x1f
-    jne kbd_callback_menu_finish
+    jne kbd_call_menu_check_config
 
     inc ebx
     cmp ebx, GAMENUM + 1
     jne kbd_callback_menu_finish
     mov ebx, 1
-;    jmp kbd_callback_menu_finish
+    jmp kbd_callback_menu_finish
+
+    kbd_call_menu_check_config:
+    cmp eax, 0x24
+    jne kbd_callback_menu_finish
+    mov eax, [curGame]
+    add eax, ebx
+    add eax, ebx
+    add eax, ebx
+    add eax, GameList
+    pushad
+    call [eax]
+    popad
+    jmp kbd_callback_menu_ret
+
     kbd_callback_menu_finish:
     mov [curGame], ebx
 
@@ -423,9 +419,53 @@ kbd_callback_menu:
     test ecx, 0xffffffff
     jnz kbd_callback_menu_loop
 
-
+    kbd_callback_menu_ret:
     pop ebp
     ret 4
+
+func_game1:
+    call clear_screen
+    mov eax, 3
+    push eax
+    mov eax, 3
+    push eax
+    mov eax, welcome_game1
+    push eax
+    call kprint_at
+    ret
+
+func_game2:
+    call clear_screen
+    mov eax, 3
+    push eax
+    mov eax, 3
+    push eax
+    mov eax, welcome_game2
+    push eax
+    call kprint_at
+    ret
+
+func_game3:
+    call clear_screen
+    mov eax, 3
+    push eax
+    mov eax, 3
+    push eax
+    mov eax, welcome_game3
+    push eax
+    call kprint_at
+    ret
+
+func_game4:
+    call clear_screen
+    mov eax, 3
+    push eax
+    mov eax, 3
+    push eax
+    mov eax, welcome_game4
+    push eax
+    call kprint_at
+    ret
 
 
 _IDT times 256 dq 0
@@ -446,11 +486,20 @@ scancode_trans db 0,0x1b,"1234567890-+",0x08,0x09,"QWERTYUIOP[]",0x0a,0x0d,"ASDF
 Name1 db "game1", 0
 Name2 db "game2", 0
 Name3 db "game3", 0
-Name4 db "game3", 0
-Name5 db "game3", 0
+Name4 db "game4", 0
+Name5 db "game5", 0
+welcome_game1 db "welcome game1", 0
+welcome_game2 db "welcome game2", 0
+welcome_game3 db "welcome game3", 0
+welcome_game4 db "welcome game4", 0
+welcome_game5 db "welcome game5", 0
+
+
 curGame dd 1
 GAMENUM equ 5
 NameList dd 0, Name1, Name2, Name3, Name3, Name5
+GameList dd 0, func_game1, func_game2, func_game3, func_game4, func_game1
+
 SArrow db "->",0
 
 finish1:
