@@ -36,10 +36,15 @@ print_obstacle:
 	print_obstacle_L1:
 		push ecx
 
+		cmp eax, 0
+		jl print_obstacle_L1_continue
+
 		mov ebx, [ebp+12]
 		mov ecx, dword obstacle_width
 		; print_obstacle_debug2:
 		print_obstacle_L1_L1:
+			cmp ebx, 0
+			jl print_obstacle_L1_L1_continue
 
 			;--------------------------------------------
 			; push params
@@ -54,21 +59,25 @@ print_obstacle:
 			call put_char
 			;--------------------------------------------
 			; print_obstacle_debug1:
+
+
+			print_obstacle_L1_L1_continue:
 			inc ebx
 			cmp ebx, 80
 			jge print_obstacle_L1_L1_end
-			cmp ebx, 0
-			jl print_obstacle_L1_L1_end
+			; cmp ebx, 0
+			; jl print_obstacle_L1_L1_end
 		loop print_obstacle_L1_L1
 		print_obstacle_L1_L1_end:
 
+
+		print_obstacle_L1_continue:
 		inc eax
 		pop ecx
-
 		cmp eax, 25
 		jge print_obstacle_L1_end
-		cmp eax, 0
-		jl print_obstacle_L1_end
+		; cmp eax, 0
+		; jl print_obstacle_L1_end
 	loop print_obstacle_L1
 	print_obstacle_L1_end:
 
@@ -150,7 +159,7 @@ dinosaur_render:
 	push ebx
 	push ecx
 
-	; call clear_screen
+	call clear_screen
 	;----------------------------------------------
 	; print player
 	mov eax, 5
@@ -163,14 +172,16 @@ dinosaur_render:
 
 	;----------------------------------------------
 	; print obstacle
-	mov ecx, 11
+	mov ecx, 0
+	mov cl, [num_obstacles]
 	mov ebx, obstacles
 	dinosaur_render_L1:
-		cmp [ebx], byte 0
-		jle dinosaur_render_L1_end
-
+		; cmp [ebx], byte 0
+		; jle dinosaur_render_L1_end
+		; dinosaur_render_debug:
 		mov eax, 0
-		mov al, [ebx]
+		mov al, byte [ebx]
+		dinosaur_render_debug:
 		push eax
 		mov eax, 22
 		push eax
@@ -218,15 +229,16 @@ dinosaur_move:
 	dinosaur_move_endif1:
 	;----------------------------------------------
 
-	mov ecx, 11
+	mov ecx, 0
+	mov cl, [num_obstacles]
 	mov ebx, obstacles
 	dinosaur_move_L1:
 		; mov al, [ebx]
 		; dinosaur_move_debug1:
-		cmp [ebx], byte 0
-		jle dinosaur_move_L1_end
+		; cmp [ebx], byte 0
+		; jle dinosaur_move_L1_end
 
-			sub [ebx], byte velocity
+		sub [ebx], byte velocity
 		; mov al, [ebx]
 		; dinosaur_move_debug2:
 
@@ -234,8 +246,70 @@ dinosaur_move:
 	loop dinosaur_move_L1
 	dinosaur_move_L1_end:
 
+	;------------------------------------------
+	; if out screen
+	mov bl, [obstacles]
+	add bl, obstacle_width
+	; dinosaur_move_debug:
+	cmp bl, byte 0
+	jge dinosaur_move_funcEnd
+	;------------------------------------------
+		mov ecx, 10
+		mov ebx, obstacles
+		dinosaur_move_L2:
+			mov al, [ebx+1]
+			mov [ebx], al
+			add ebx, 1
+		loop dinosaur_move_L2
+		mov [ebx], byte 0
+		sub [num_obstacles], byte 1
+
+	dinosaur_move_funcEnd:
+
 	pop ebx
 	pop ecx
+	pop eax
+	ret
+
+dinosaur_random_add:
+	push eax
+	push ebx
+	push ecx
+
+	;-----------------------------------------------
+	; if there is no obstacle on screen
+	; add one obstacle
+	cmp [num_obstacles], byte 0
+	jg dinosaur_random_add_has_obstacle
+	;-----------------------------------------------
+		mov [obstacles], byte 80
+		add [num_obstacles], byte 1
+		jmp dinosaur_random_add_funcEnd
+	;-----------------------------------------------
+	dinosaur_random_add_has_obstacle:
+	;-----------------------------------------------
+	; if last obstacle pos_x <= 60
+	mov ebx, 0
+	mov bl, [num_obstacles]
+	cmp [obstacles+ebx-1], byte 60
+	jg dinosaur_random_add_funcEnd
+	;-----------------------------------------------
+		;-----------------------------------------------
+		; random add
+		call rand_num
+		; dinosaur_random_add_debug1:
+		and eax, 0x7
+		; dinosaur_random_add_debug2:
+		cmp eax, 0
+		jne dinosaur_random_add_funcEnd
+		;-----------------------------------------------
+			mov [obstacles+ebx], byte 80
+			add [num_obstacles], byte 1
+			jmp dinosaur_random_add_funcEnd
+
+	dinosaur_random_add_funcEnd:
+	pop ecx
+	pop ebx
 	pop eax
 	ret
 
@@ -246,6 +320,7 @@ dinosaur_check:
 	push edx
 
 	call dinosaur_move
+	call dinosaur_random_add
 
 	mov ecx, 11
 	mov ebx, obstacles
@@ -256,14 +331,14 @@ dinosaur_check:
 		;----------------------------------------------------
 		;check conflicts
 		mov al, [ebx]
-		.dinosaur_check_debug1:
+		; .dinosaur_check_debug1:
 		cmp al, byte (5+player_width)
 		jg .dinosaur_check_continue
 		cmp al, byte (5-obstacle_width)
-		jl .dinosaur_check_continue
+		jle .dinosaur_check_continue
 
 		mov al, [player_pos_y]
-		.dinosaur_check_debug2:
+		; .dinosaur_check_debug2:
 		cmp al, byte 25
 		jg .dinosaur_check_continue
 		cmp al, byte (25-obstacle_height-player_height)
@@ -317,13 +392,14 @@ dinosaur_callback:
 	; call int_to_ascii
 	; push NUM
 	; call kprint
-	call clear_screen
 	;----------------------------------------------
 	;if gameStatus == 1
 	; mov al, 1
 	cmp [gameStatus], byte 1
 	jne dinosaur_callback_gameStatusNotEqual1
 	;----------------------------------------------
+		; call dinosaur_move
+		; call dinosaur_random_add
 		call dinosaur_check
 		call dinosaur_render
 		jmp dinosaur_callback_funcEnd
@@ -362,12 +438,31 @@ dinosaur_jump:
 	ret
 
 dinosaur_startgame:
-	push eax
+
+	; mov [gameStatus], byte 1
+	; mov [frame], dword 0
+	call dinosaur_restart
+	ret
+
+dinosaur_restart:
+	push ebx
+	push ecx
 
 	mov [gameStatus], byte 1
+	mov [player_pos_y], byte 20
 	mov [frame], dword 0
 
-	pop eax
+	mov ebx, obstacles
+	mov ecx, 11
+	dinosaur_restart_L1:
+		mov [ebx], byte 0
+		add ebx, 1
+	loop dinosaur_restart_L1
+	mov [obstacles], byte 80
+	mov [num_obstacles], byte 1
+
+	pop ecx
+	pop ebx
 	ret
 
 dinosaur_kbdDectect:
@@ -381,19 +476,68 @@ dinosaur_kbdDectect:
 	cmp eax, 0x1F
 	jne dinosaur_kbdDectect_Not_S
 	;----------------------------------------------
-	call dinosaur_startgame
-
-	jmp dinosaur_kbdDectect_funcEnd
+		;------------------------------------------
+		; if gameStatus = 0
+		cmp [gameStatus], byte 0
+		jne dinosaur_kbdDectect_funcEnd
+		;------------------------------------------
+			call dinosaur_startgame
+		jmp dinosaur_kbdDectect_funcEnd
 	dinosaur_kbdDectect_Not_S:
 	;----------------------------------------------
 	;if input 'J'
 	cmp eax, 0x24
 	jne dinosaur_kbdDectect_Not_J
 	;----------------------------------------------
-	call dinosaur_jump
-
-	jmp dinosaur_kbdDectect_funcEnd
+		;------------------------------------------
+		; if gameStatus = 1
+		cmp [gameStatus], byte 1
+		jne dinosaur_kbdDectect_funcEnd
+		;------------------------------------------
+			call dinosaur_jump
+		;------------------------------------------
+		jmp dinosaur_kbdDectect_funcEnd
 	dinosaur_kbdDectect_Not_J:
+	;----------------------------------------------
+	;if input 'R'
+	cmp eax, 0x13
+	jne dinosaur_kbdDectect_Not_R
+	;----------------------------------------------
+		;------------------------------------------
+		; if gameStatus = 2
+		cmp [gameStatus], byte 2
+		jne dinosaur_kbdDectect_funcEnd
+		;------------------------------------------
+			call dinosaur_restart
+		;------------------------------------------
+		jmp dinosaur_kbdDectect_funcEnd
+	dinosaur_kbdDectect_Not_R:
+	;----------------------------------------------
+	;if input 'P'
+	cmp eax, 0x19
+	jne dinosaur_kbdDectect_Not_P
+	;----------------------------------------------
+		;------------------------------------------
+		; if gameStatus = 1
+		cmp [gameStatus], byte 1
+		jne dinosaur_kbdDectect_Not_P_not_1
+		;------------------------------------------
+			; call dinosaur_restart
+			mov [gameStatus], byte 3
+			jmp dinosaur_kbdDectect_funcEnd
+		;------------------------------------------
+		dinosaur_kbdDectect_Not_P_not_1:
+		;------------------------------------------
+		; if gameStatus = 3
+		cmp [gameStatus], byte 3
+		jne dinosaur_kbdDectect_Not_P_not_3
+		;------------------------------------------
+			mov [gameStatus], byte 1
+			jmp dinosaur_kbdDectect_funcEnd
+		;------------------------------------------
+		dinosaur_kbdDectect_Not_P_not_3:
+		jmp dinosaur_kbdDectect_funcEnd
+	dinosaur_kbdDectect_Not_P:
 
 	dinosaur_kbdDectect_funcEnd:
 	pop eax
@@ -424,7 +568,6 @@ main:
     push dinosaur_callback
     call register_tim_callback
 
-
     push dinosaur_kbdDectect
     call register_kbd_callback
     jmp $
@@ -437,7 +580,9 @@ infoGameOver db "Game Over!", 0
 gameStatus db 0 ; 0 not start
 				; 1 playing
 				; 2 over
+				; 3 paused
 obstacles db 80,0,0,0,0,0,0,0,0,0,0
+num_obstacles db 1
 player_pos_y db 20
 player_acc_y db 0
 NUM db 0,0,0,0,0,0,0,0,0,0,0,0,0,0
