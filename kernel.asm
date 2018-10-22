@@ -232,9 +232,9 @@ dinosaur_move:
 		sub [player_acc_y], byte 1
 		; mov al, [player_acc_y]
 		; dinosaur_move_debug2:
-		; cmp [player_pos_y], byte 20
-		; jg dinosaur_move_endif1
-		; 	mov [player_pos_y], byte 20
+		cmp [player_pos_y], byte 20
+		jl dinosaur_move_endif1
+			mov [player_pos_y], byte 20
 		jmp dinosaur_move_endif1
 	;----------------------------------------------
 	; else player_pos_y >= 20
@@ -577,13 +577,46 @@ dinosaur_kbdDectect:
 		jmp dinosaur_kbdDectect_funcEnd
 	dinosaur_kbdDectect_Not_P:
 
+	;----------------------------------------------
+	;if input 'Q'
+	cmp eax, 0x19
+	jne dinosaur_kbdDectect_Not_Q
+	;----------------------------------------------
+		mov [dinosaur_esc], byte 1
+	dinosaur_kbdDectect_Not_Q:
+
+
 	dinosaur_kbdDectect_funcEnd:
 	pop eax
 	pop ebp
 	ret 4
 
+init_game_params:
+	; push ebx
+	; push ecx
+
+	mov [dinosaur_esc], byte 0
+	call dinosaur_restart
+	; mov [gameStatus], byte 1
+	; mov [player_pos_y], byte 20
+	; mov [frame], dword 0
+
+	; mov ebx, obstacles
+	; mov ecx, 11
+	; dinosaur_restart_L1:
+	; 	mov [ebx], byte 0
+	; 	add ebx, 1
+	; loop dinosaur_restart_L1
+	; mov [obstacles], byte 80
+	; mov [num_obstacles], byte 1
+
+	; pop ecx
+	; pop ebx
+	ret
+
 main:
 	call init_seed
+	call init_game_params
 	; mov ecx, 10
 	; rand_loop:
 	; 	call rand_num
@@ -608,9 +641,14 @@ main:
 
     push dinosaur_kbdDectect
     call register_kbd_callback
-    jmp $
+
+    dinosaur_loop:
+    	cmp [dinosaur_esc], byte 0
+    	je dinosaur_loop
+    mov [dinosaur_esc], byte 0
 	ret
 
+dinosaur_esc db 0
 RANDNUM db 0,0,0,0,0,0,0,0,0,0,0,0,0,0
 MSG db "Message from kernel 2", 0
 KBD db "KBD", 0
