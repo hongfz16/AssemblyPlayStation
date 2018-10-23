@@ -200,7 +200,7 @@ curGame dd 1
 always0 dd 0
 GAMENUM equ 3
 NameList dd 0, Name1, Name2, Name3
-GameList dd 0, 0x3000, 0x3800, 0x3800
+GameList dd 0, 0x3000, 0x3800, 0x4000
 
 SArrow db "->",0
 
