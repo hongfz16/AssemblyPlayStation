@@ -489,17 +489,23 @@ dinosaur_callback:
 
 	dinosaur_callback_funcEnd:
 
-	pushad
-	mov eax, dword [random_num]
-	push RANDNUM
-	push eax
-	call int_to_ascii
 	mov eax, 0
 	push eax
 	push eax
-	push RANDNUM
+	mov eax, info
+	push eax
 	call kprint_at
-	popad
+	; pushad
+	; mov eax, dword [random_num]
+	; push RANDNUM
+	; push eax
+	; call int_to_ascii
+	; mov eax, 0
+	; push eax
+	; push eax
+	; push RANDNUM
+	; call kprint_at
+	; popad
 
 	; mov eax, dword [frame]
 	; push RANDNUM
@@ -715,6 +721,7 @@ RANDNUM db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 MSG db "Message from kernel 2", 0
 KBD db "KBD", 0
 infoGameOver db "Game Over!", 0
+info db "Press 'R' to restart, 'J' to jump, 'P' to pause/continue, 'Q' to quit", 0
 gameStatus db 0 ; 0 not start
 				; 1 playing
 				; 2 over
