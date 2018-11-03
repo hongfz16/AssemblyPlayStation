@@ -6,7 +6,7 @@
 
 $(info VAR=$(shell uname))
 ifeq ($(shell uname), Linux)
-GDB = gdb # /usr/local/i386elfgcc/bin/i386-elf-gdb
+GDB = gdb
 LD = ld -m elf_i386
 NASM = nasm
 else
