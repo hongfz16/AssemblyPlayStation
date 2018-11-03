@@ -3,36 +3,44 @@
 # $^ = all dependencies
 
 # First rule is the one executed when no parameters are fed to the Makefile
+
+$(info VAR=$(shell uname))
+ifeq ($(shell uname), Linux)
+GDB = gdb
+LD = ld -m elf_i386
+NASM = nasm
+else
 GDB = /usr/local/i386elfgcc/bin/i386-elf-gdb
-
-all: run
-
-kernel1.bin: kernel1.asm
-	nasm $< -f bin -o $@
-
-kernel2.bin: kernel2.asm
-	nasm $< -f bin -o $@
+LD = i386-elf-ld
+NASM = nasm
+endif
 
 bootsect.bin: bootsect.asm
-	nasm $< -f bin -o $@
-
-os-image.bin: bootsect.bin kernel1.bin kernel2.bin
-	cat $^ > $@
-
-run: os-image.bin
-	qemu-system-i386 -fda $<
+	${NASM} $< -f bin -o $@
 
 %.o: %.asm
-	nasm $< -f elf -o $@
+	${NASM} $< -f elf -o $@
 
-run-debug: bootsect.bin kernel1.o kernel2.o
-	i386-elf-ld -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o --oformat binary
+itoa.o: utils/itoa.asm
+	${NASM} $< -f elf -o $@
+
+random.o: utils/random.asm
+	${NASM} $< -f elf -o $@
+
+vga_driver.o: utils/vga_driver.asm
+	${NASM} $< -f elf -o $@
+
+get_time.o: utils/get_time.asm
+	${NASM} $< -f elf -o $@
+
+run-debug: bootsect.bin main.o menu.o clock.o dinasour.o stopwatch.o itoa.o random.o vga_driver.o get_time.o
+	${LD} -o kernel.bin -Ttext 0x1000 main.o menu.o clock.o dinasour.o stopwatch.o itoa.o random.o vga_driver.o get_time.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -fda os-image-debug.bin
 
-debug: bootsect.bin kernel1.o kernel2.o
-	i386-elf-ld -o kernel.elf -Ttext 0x1000 kernel1.o kernel2.o
-	i386-elf-ld -o kernel.bin -Ttext 0x1000 kernel1.o kernel2.o --oformat binary
+debug: bootsect.bin main.o menu.o clock.o dinasour.o stopwatch.o itoa.o random.o vga_driver.o get_time.o
+	${LD} -o kernel.elf -Ttext 0x1000 main.o menu.o clock.o dinasour.o stopwatch.o itoa.o random.o vga_driver.o get_time.o
+	${LD} -o kernel.bin -Ttext 0x1000 main.o menu.o clock.o dinasour.o stopwatch.o itoa.o random.o vga_driver.o get_time.o --oformat binary
 	cat bootsect.bin kernel.bin > os-image-debug.bin
 	qemu-system-i386 -s -fda os-image-debug.bin &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
